@@ -75,7 +75,11 @@ LogStream.prototype.openStream = Promise.method(function () {
     return self.stat(logfile).then(function (stats) {
         self.bytes = stats.size;
     }).catch(function (err) {
-        console.log(err)
+        if (err.cause && err.cause.code === 'ENOENT') {
+            self.bytes = 0;
+        } else {
+            throw err;
+        }
     }).then(function () {
         self.stream = self.createWriteStream(logfile, { flags: 'a' });
     });
