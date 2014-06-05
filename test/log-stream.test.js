@@ -8,8 +8,14 @@ var LogStream = require('../log-stream');
 describe('LogStream', function () {
     function dumy(obj) {
         obj = obj || { };
+        
+        var statmock = { size: 1413 };
+
         return {
             maxSize: obj.maxSize || 10,
+            stat: Promise.method(function () {
+                return obj.stat ? obj.stat.apply(null, arguments) : statmock;
+            }),
             readDir: Promise.method(function () {
                 if (obj.files) { return obj.files; }
                 return obj.readDir ? obj.readDir.apply(null, arguments) : [ ];
@@ -92,5 +98,13 @@ describe('LogStream', function () {
         
         stream.write('0123456789');
         stream.write('foo');
+    });
+    it('should initialize to the size of any existing log file', function () {
+        var stream = new LogStream(dumy({
+            stat: function () { return Promise.resolve({ size: 123 }); }
+        }));
+        return stream.init().then(function () {
+            stream.bytes.should.equal(123);
+        });
     });
 });

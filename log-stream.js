@@ -13,6 +13,7 @@ function LogStream(cfg) {
     
     stream.Writable.call(this);
     
+    this.stat = cfg.stat || Promise.promisify(fs.stat);
     this.rename = cfg.rename || Promise.promisify(fs.rename);
     this.readDir = cfg.readDir || Promise.promisify(fs.readdir);
     this.createWriteStream = cfg.createWriteStream || fs.createWriteStream;
@@ -37,7 +38,7 @@ LogStream.prototype._write = function (chunk, encoding, callback) {
     }).then(function () {
         self.bytes += chunk.length;
         self.stream.write(chunk);
-        
+    }).then(function () {
         if (self.bytes >= self.maxSize) {
             return self.rotateStream();
         }
@@ -69,8 +70,15 @@ LogStream.prototype.openStream = Promise.method(function () {
         console.log('WARN: LogStream.openStream called but already had a stream');
         this.stream.end();
     }
+    
     var logfile = PATH.join(this.dirName, this.fileName);
-    this.stream = this.createWriteStream(logfile, { flags: 'a' });
+    return self.stat(logfile).then(function (stats) {
+        self.bytes = stats.size;
+    }).catch(function (err) {
+        console.log(err)
+    }).then(function () {
+        self.stream = self.createWriteStream(logfile, { flags: 'a' });
+    });
 });
 LogStream.prototype.rotateStream = Promise.method(function () {
     var logfile = PATH.join(this.dirName, this.fileName),
