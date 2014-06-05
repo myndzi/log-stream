@@ -1,0 +1,14 @@
+{
+  "name": "log-stream",
+  "version": "0.1.0",
+  "description": "Writable stream for log rotation",
+  "main": "log-stream.js",
+  "scripts": {
+    "test": "mocha -u bdd -R spec test"
+  },
+  "author": "Kris Reeves",
+  "license": "ISC",
+  "dependencies": {
+    "bluebird": "^2.0.2"
+  }
+}
